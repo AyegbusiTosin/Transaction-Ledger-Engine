@@ -2,8 +2,17 @@
 
 import asyncpg
 from fastapi import Request
+from dotenv import load_dotenv
+import os
 
-DATABASE_URL = "postgresql://transaction_database:ayodeji0@127.0.0.1:5432/transaction_db"
+load_dotenv()
+
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+
+
+DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@127.0.0.1:5432/{POSTGRES_DB}"
 
 #establishes collection of reusuable connections 
 async def create_pool():
