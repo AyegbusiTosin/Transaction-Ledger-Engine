@@ -3,7 +3,7 @@
 import asyncpg
 from fastapi import Request
 
-DATABASE_URL = "postgresql://transaction_database:ayodeji0@127.0.0.1:5432/transaction_db"
+DATABASE_URL = "postgresql://POSTGRES_USER:POSTGRES_PASSWORD@127.0.0.1:5432/POSTGRES_DB"
 
 #establishes collection of reusuable connections 
 async def create_pool():
