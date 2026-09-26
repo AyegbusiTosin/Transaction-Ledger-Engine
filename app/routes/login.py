@@ -1,3 +1,5 @@
+#handles network logiv for login endpoint
+
 from schemas import LoginRequest
 from fastapi import APIRouter, Depends, HTTPException
 from database import get_db 
@@ -18,4 +20,18 @@ async def login(login_data: LoginRequest,
     except InvalidCredentialsError:
             raise HTTPException(status_code=401,
                                 detail="Invalid email or password")
-    
+
+
+from fastapi import Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from utils.auth import security
+
+
+@router.get("/test-auth")
+async def test_auth(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    return {
+        "scheme": credentials.scheme,
+        "credentials": credentials.credentials
+    }

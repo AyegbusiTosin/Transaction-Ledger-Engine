@@ -1,6 +1,7 @@
 #Handles business logic of the login endpoint
 from exceptions import InvalidCredentialsError
 from pwdlib import PasswordHash
+from utils.auth import create_access_token
 
 
 async def process_login(login_data, conn):
@@ -24,7 +25,9 @@ async def process_login(login_data, conn):
         ):
         raise InvalidCredentialsError()
 
+    access_token = create_access_token(user["id"])
+
     return{"message": "Authentication successful",
+           "access_token": access_token,
            "user_id": user["id"],
            "name": user["name"]}
-
