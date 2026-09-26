@@ -7,7 +7,7 @@ from schemas import AccountCreate, TransferRequest
 import asyncio
 from routes.accounts import router as accounts_router
 from routes.transfers import router as transfers_router
-
+from routes.login import router as login_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,6 +24,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(accounts_router)
 app.include_router(transfers_router) 
+app.include_router(login_router)
 
 
 

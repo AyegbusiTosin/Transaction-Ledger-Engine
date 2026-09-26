@@ -13,3 +13,8 @@ class TransferRequest(BaseModel):
     receiver_id: int
     amount: Decimal
     idempotency_key: str    #identifies operation ID
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str

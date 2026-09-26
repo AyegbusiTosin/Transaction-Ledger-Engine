@@ -15,3 +15,6 @@ class IdempotencyConflictError(Exception):
     pass
 
 
+class InvalidCredentialsError(Exception):
+    pass
+
