@@ -1,0 +1,48 @@
+#Networking aspect of the transfer operation endpoint
+#handles HTTP request for transfer operations
+#parse/validate request
+#obtain database connection
+#call operation
+
+from schemas import TransferRequest
+from fastapi import APIRouter, Depends, HTTPException
+from database import get_db
+from services.transfers import process_transfer
+from exceptions import(
+      SenderNotFoundError,
+    ReceiverNotFoundError,
+    InsufficientFundsError,
+    IdempotencyConflictError
+)
+
+
+
+router = APIRouter()
+
+@router.post("/transfer")
+async def make_transfer(transfers: TransferRequest,
+                         conn = Depends (get_db)):
+
+    try:
+
+        result = await process_transfer(transfers, conn)
+        return result 
+
+    except SenderNotFoundError:
+        raise HTTPException(status_code=404,
+                            detail="Sender account not found")
+
+    except ReceiverNotFoundError:
+        raise HTTPException(status_code=404,
+                            detail="Receiver account not found")
+
+    except InsufficientFundsError:
+            raise HTTPException(status_code=400,
+                                detail="Insufficient funds")
+
+    except IdempotencyConflictError:
+            raise HTTPException(status_code=409,
+                                detail="Operation already performed")
+    
+    
+    

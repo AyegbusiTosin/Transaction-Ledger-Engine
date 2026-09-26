@@ -1,0 +1,22 @@
+# --- Python Virtual Environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Python Cache and System Files ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+# --- Environment Variables & Secrets ---
+.env
+.env.*
+secrets.json
+
+# --- IDEs and Editors ---
+.vscode/
+.idea/
+*.swp
