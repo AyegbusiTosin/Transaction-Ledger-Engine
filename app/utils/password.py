@@ -1,4 +1,4 @@
-#responsible for password hashing
+#responsible for hashing passwords
 
 from pwdlib import PasswordHash
 

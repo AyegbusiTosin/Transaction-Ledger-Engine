@@ -21,7 +21,7 @@ async def create_pool():
         max_size=20
     )
 
-#endpoints request and get database connection 
+#endpoints get database connection from pool 
 async def get_db(request :Request):
     async with request.app.state.pool.acquire() as conn:
         yield conn

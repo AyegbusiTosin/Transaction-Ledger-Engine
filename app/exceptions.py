@@ -1,6 +1,7 @@
 #categorizing error exceptions
-
 #class 'errorname'(Exception)- this means create a new class called 'errorname', based on Exception (inheritance)
+
+
 
 class SenderNotFoundError(Exception):
     pass
@@ -14,7 +15,8 @@ class InsufficientFundsError(Exception):
 class IdempotencyConflictError(Exception):
     pass
 
-
 class InvalidCredentialsError(Exception):
     pass
 
+class EmailAlreadyRegisteredError(Exception):
+    pass

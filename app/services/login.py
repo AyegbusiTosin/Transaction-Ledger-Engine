@@ -1,4 +1,5 @@
 #Handles business logic of the login endpoint
+
 from exceptions import InvalidCredentialsError
 from pwdlib import PasswordHash
 from utils.auth import create_access_token
@@ -15,7 +16,8 @@ async def process_login(login_data, conn):
                                login_data.email)
 
     if not user:
-        raise InvalidCredentialsError()  
+        raise InvalidCredentialsError()
+        #"Invalid email or Password"  
 
     password_hash = PasswordHash.recommended()
 
@@ -24,6 +26,7 @@ async def process_login(login_data, conn):
                          user["password"]
         ):
         raise InvalidCredentialsError()
+        #"Invalid email or Password"
 
     access_token = create_access_token(user["id"])
 

@@ -1,4 +1,4 @@
-#handles network logiv for login endpoint
+#handles network logic for login endpoint
 
 from schemas import LoginRequest
 from fastapi import APIRouter, Depends, HTTPException

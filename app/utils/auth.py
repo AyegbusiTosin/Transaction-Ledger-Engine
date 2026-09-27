@@ -1,4 +1,5 @@
 #handles the issuing of JWT Tokens
+
 import jwt
 from dotenv import load_dotenv
 import os
