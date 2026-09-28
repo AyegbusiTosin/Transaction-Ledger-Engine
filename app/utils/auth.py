@@ -26,4 +26,13 @@ def create_access_token(user_id: int):
 
 async def get_current_user(
         credentials: HTTPAuthorizationCredentials = Depends(security)):
-    print(credentials)
+    
+    token = credentials.credentials
+
+    payload =jwt.decode(
+        token,
+        SECRET_KEY,
+        algorithms=[ALGORITHM]
+    )
+    print(payload)
+    return payload

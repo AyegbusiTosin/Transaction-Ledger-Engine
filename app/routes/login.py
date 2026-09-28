@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from database import get_db 
 from services.login import process_login
 from exceptions import InvalidCredentialsError
-
+from utils.auth import security, get_current_user
 
 router = APIRouter()
 
@@ -22,16 +22,15 @@ async def login(login_data: LoginRequest,
                                 detail="Invalid email or password")
 
 
-from fastapi import Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from utils.auth import security
+#from fastapi import Depends
+#rom fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+#from utils.auth import security
 
 
-@router.get("/test-auth")
-async def test_auth(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    return {
-        "scheme": credentials.scheme,
-        "credentials": credentials.credentials
-    }
+#@router.get("/test-auth")
+#async def test_auth(
+ #   current_user = Depends(get_current_user)
+#):
+ #   return {
+  #      "message": "Token accepted"
+   # }
