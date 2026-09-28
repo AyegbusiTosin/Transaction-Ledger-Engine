@@ -28,6 +28,7 @@ async def process_login(login_data, conn):
         raise InvalidCredentialsError()
         #"Invalid email or Password"
 
+    #creates and assigns token to user_id
     access_token = create_access_token(user["id"])
 
     return{"message": "Authentication successful",

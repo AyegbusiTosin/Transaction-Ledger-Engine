@@ -22,15 +22,10 @@ async def login(login_data: LoginRequest,
                                 detail="Invalid email or password")
 
 
-#from fastapi import Depends
-#rom fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-#from utils.auth import security
-
-
-#@router.get("/test-auth")
-#async def test_auth(
- #   current_user = Depends(get_current_user)
-#):
- #   return {
-  #      "message": "Token accepted"
-   # }
+@router.get("/test-auth")
+async def test_auth(
+    current_user = Depends(get_current_user)
+):
+    return {
+        "authenticated_user": current_user
+    }
