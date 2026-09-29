@@ -1,4 +1,4 @@
-#handles network logic for login endpoint
+#handles network for login endpoint
 
 from schemas import LoginRequest
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,6 +11,8 @@ router = APIRouter()
 
 @router.post("/login")
 async def login(login_data: LoginRequest,
+                #dependency injections
+                #meaning- this function needs these things to run 
                 conn = Depends(get_db)):
 
     try:

@@ -14,6 +14,8 @@ router = APIRouter()
 
 @router.post("/createaccount")
 async def account_creation(users: AccountCreate,
+                    #dependency injections
+                    #meaning- this function needs these things to run 
             conn = Depends(get_db) ): 
 
         try:

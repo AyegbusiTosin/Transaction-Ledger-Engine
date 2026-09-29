@@ -9,10 +9,15 @@ class AccountCreate(BaseModel):
     password: str
 
 class TransferRequest(BaseModel):
-    sender_id: int
+
+    #The client chooses the destination account
     receiver_id: int
+
+    #the amount the authenticated user wants to transfer
     amount: Decimal
-    idempotency_key: str    #identifies operation ID
+
+    #identifies operation ID so retries dont create duplicates
+    idempotency_key: str   
 
 
 class LoginRequest(BaseModel):

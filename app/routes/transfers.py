@@ -8,6 +8,7 @@ from schemas import TransferRequest
 from fastapi import APIRouter, Depends, HTTPException
 from database import get_db
 from services.transfers import process_transfer
+from utils.auth import get_current_user
 from exceptions import(
       SenderNotFoundError,
     ReceiverNotFoundError,
@@ -21,11 +22,14 @@ router = APIRouter()
 
 @router.post("/transfer")
 async def make_transfer(transfers: TransferRequest,
-                         conn = Depends (get_db)):
+                                #dependency injection
+                                #meeaning- this function needs these things to run 
+                         conn=Depends (get_db),
+                         current_user=Depends(get_current_user)):
 
     try:
 
-        result = await process_transfer(transfers, conn)
+        result = await process_transfer(transfers, conn, current_user)
         return result 
 
     except SenderNotFoundError:

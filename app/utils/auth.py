@@ -47,4 +47,4 @@ async def get_current_user(
         raise HTTPException(status_code=401,
                              detail="Invalid token: missing user identifier")
 
-    return user_id
+    return int(user_id)
