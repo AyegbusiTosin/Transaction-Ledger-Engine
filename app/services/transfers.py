@@ -6,6 +6,8 @@ from exceptions import(
     InsufficientFundsError,
     IdempotencyConflictError
 )
+from services.bank import make_bank_transfer
+
 
 async def process_transfer(transfers, conn,current_user ):
 
@@ -80,8 +82,18 @@ async def process_transfer(transfers, conn,current_user ):
     
                 if not receiver:
                     raise ReceiverNotFoundError()
-    
-    
+
+                #External Bank service Simulation
+                result = await make_bank_transfer(
+                       from_account=str(sender["id"]),
+                       to_account=str(transfers.receiver_id),
+                       amount=transfers.amount
+                       )
+                print(result)
+
+                #DELIBERATE FAILURE
+                #raise Exception("Boom!!!")
+                 
                 deduct_query = """
                     UPDATE account
                     SET balance = balance - $1

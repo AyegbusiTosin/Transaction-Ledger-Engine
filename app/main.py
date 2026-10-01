@@ -27,12 +27,19 @@ app.include_router(transfers_router)
 app.include_router(login_router)
 
 
-
-        
-
-
+#testing endpoint
+from services.bank import make_bank_transfer
 
 
+@app.get("/test-bank")
+async def test_bank():
+
+   result = await make_bank_transfer(
+       from_account="tolu",
+       to_account="deji",
+       amount=230)
+
+   return result
 
 
 
