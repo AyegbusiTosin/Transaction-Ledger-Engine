@@ -97,7 +97,7 @@ async def process_transfer(transfers, conn,current_user ):
 
                 print(result)
 
-                #DELIBERATE FAILURE
+                #DELIBERATE FAILURE after external bank confirmed operation
                 #raise Exception("Boom!!!")
                  
                 deduct_query = """

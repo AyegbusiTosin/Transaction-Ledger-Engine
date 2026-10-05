@@ -30,12 +30,24 @@ app = FastAPI(lifespan=lifespan)
 @app.post("/bank/transfer")
 async def make_transfer(transfer: BankTransferRequest):
 
-    processed_transfers[transfer.idempotency_key] = {
-           "sender": transfer.from_account,
+    #checks if the operation has been processed
+    if transfer.idempotency_key in processed_transfers:
+        print("BANK: duplicate request detected")
+        print("BANK: returning previous result")
+
+        return processed_transfers[transfer.idempotency_key]
+
+    #first time processing the operation
+    result = {
+        "sender": transfer.from_account,
         "receiver": transfer.to_account,
         "amount": transfer.amount,
-        "status": "SUCCESS"
+        "status": "SUCCESS",
+        "message": "transfer processed"
     }
+
+    #record the completed operation
+    processed_transfers[transfer.idempotency_key] = result
 
     print("BANK: transfer processed")
     print(processed_transfers)   
@@ -43,9 +55,4 @@ async def make_transfer(transfer: BankTransferRequest):
     #simulate response getting lost/delayed
     await asyncio.sleep(5)
 
-    return {"sender": transfer.from_account,
-            "receiver": transfer.to_account,
-            "amount": transfer.amount, 
-            "status": "SUCCESS",
-            "message": "Transfer Processed"
-            }
+    return result 
