@@ -21,7 +21,11 @@ async def claim_job(conn, worker_id):
         WITH job_to_claim AS (
             SELECT id
             FROM jobs
-            WHERE status = 'CREATED'
+                WHERE status = 'CREATED'
+                OR (
+                    status = 'PROCESSING'
+                    AND lease_expires_at < NOW()
+                    )
             ORDER BY id
             FOR UPDATE SKIP LOCKED
             LIMIT 1
@@ -30,8 +34,8 @@ async def claim_job(conn, worker_id):
         SET
             status = 'PROCESSING',
             worker_id = $1,
+            lease_expires_at = NOW() + INTERVAL '15 seconds',
             attempt_count = attempt_count + 1,
-            lease_expires_at = NOW() + INTERVAL '30 seconds',
             ownership_version = ownership_version + 1
         FROM job_to_claim
         WHERE jobs.id = job_to_claim.id
@@ -39,7 +43,9 @@ async def claim_job(conn, worker_id):
             jobs.id,
             jobs.status,
             jobs.worker_id,
-            jobs.attempt_count;
+            jobs.attempt_count,
+            jobs.ownership_version,
+            jobs.lease_expires_at;
     """
 
     return await conn.fetchrow(query, worker_id)
@@ -69,15 +75,30 @@ async def main():
 
         print(f"{worker_id}: finished job {job['id']}")
 
-        await conn.execute(
-            """
-            UPDATE jobs
-            SET status = 'SUCCESS'
-            WHERE id = $1
-            """,
-            job["id"]
-        )
-
+        result = await conn.execute(
+                    """
+                    UPDATE jobs
+                    SET 
+                        status = 'SUCCESS',
+                        lease_expires_at = NULL
+                    WHERE id = $1
+                    AND worker_id = $2
+                    AND ownership_version = $3
+                    AND lease_expires_at > NOW()
+                    AND status = 'PROCESSING';
+                    """,
+                    job["id"],
+                    worker_id,
+                    job["ownership_version"]
+                )
+        if result == "UPDATE 1":
+                    print(f"{worker_id}: completed job {job['id']}")
+        
+        else:
+            print(
+                f"{worker_id}: lost ownership of job {job['id']}; "
+                )
+        
 
 if __name__ == "__main__":
     asyncio.run(main())
