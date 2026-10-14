@@ -1,4 +1,5 @@
-#handles business logic of Transfer endpoint
+#handles accepting a transfer and reserving its funds
+#the background worker will execute accepted transfers later
 
 from exceptions import(
       SenderNotFoundError,
@@ -18,8 +19,9 @@ async def process_transfer(transfers, conn,current_user ):
     
                 #'FOR UPDATE' row locking to prevent concurrency(race condition)
                 # (row locked , no other allowed operation at the time )
+                #Pessimistic row lock
                 sender_query = """
-                SELECT id, user_id, balance
+                SELECT id, user_id, balance, reserved_balance
                 FROM account
                 WHERE user_id = $1
                 FOR UPDATE;   
@@ -36,8 +38,8 @@ async def process_transfer(transfers, conn,current_user ):
                   #  "sender_account":sender["id"],
                    #  "balance": sender["balance"] }
     
-                if sender["balance"] < transfers.amount:
-                    raise InsufficientFundsError()
+                #if sender["balance"] < transfers.amount:
+                 #   raise InsufficientFundsError()
 
                  # IDEMPOTENCY CHECK
                     # ---------------------------------------------------------
@@ -54,7 +56,7 @@ async def process_transfer(transfers, conn,current_user ):
                                 transfers.idempotency_key
                             )
                     
-                            #
+                            
                 if existing_transfer:
                     if (
                         existing_transfer["sender_id"] == sender["id"]
@@ -71,7 +73,7 @@ async def process_transfer(transfers, conn,current_user ):
                             # client is attempting to reuse an operation key.
                             raise IdempotencyConflictError()
                                 
-                    
+                #A transfer cannot be sent to an account that doesn't exist 
                 receiver_query = """
                 SELECT id, user_id, balance
                 FROM account
@@ -84,44 +86,30 @@ async def process_transfer(transfers, conn,current_user ):
                     raise ReceiverNotFoundError()
 
 
-                from services.bank import make_bank_transfer
+                #only unreserved funds are avaliable for a new transfer
+                available_funds = sender["balance"] - sender["reserved_balance"]
 
-                #External Bank service Simulation
-                result = await make_bank_transfer(
-                       from_account=str(sender["id"]),
-                       to_account=str(transfers.receiver_id),
-                       amount=transfers.amount,
-                       idempotency_key=transfers.idempotency_key
+                if transfers.amount <= 0:
+                      raise ValueError("Transfer amount must be positive")
+
+                if available_funds < transfers.amount:
+                      raise InsufficientFundsError()
+
+                #Reserve funds and create the durable operation record
+                #In the same transaction, if either steps fails, both roll back
+                #Optimistic /Lock free 
+                reserve_query = """
+                UPDATE account
+                SET reserved_balance = reserved_balance + $1
+                WHERE id = $2
+                RETURNING id, reserved_balance
+                """
+
+                await conn.fetchrow(
+                      reserve_query,
+                      transfers.amount,
+                      sender["id"],
                 )
-
-
-                print(result)
-
-                #DELIBERATE FAILURE after external bank confirmed operation
-                #raise Exception("Boom!!!")
-                 
-                deduct_query = """
-                    UPDATE account
-                    SET balance = balance - $1
-                    WHERE id = $2
-                    RETURNING id, user_id, balance;
-                    """
-    
-                deduct = await conn.fetchrow(deduct_query, 
-                                         transfers.amount,
-                                         sender["id"])
-                                                            
-                                        
-                add_query="""
-                    UPDATE account
-                    SET balance = balance + $1
-                    WHERE id = $2
-                    RETURNING id, user_id, balance;
-                    """
-                add = await conn.fetchrow(add_query, 
-                                      transfers.amount, 
-                                      transfers.receiver_id)
-        
 
                 transferLog_query = """
                     INSERT INTO transfers (sender_id, receiver_id, amount, status, idempotency_key)
@@ -132,7 +120,7 @@ async def process_transfer(transfers, conn,current_user ):
                                                sender["id"],
                                                 transfers.receiver_id,
                                                  transfers.amount,
-                                                  "SUCCESS",
+                                                  "CREATED",
                                                 transfers.idempotency_key)
     
             return {
@@ -143,7 +131,10 @@ async def process_transfer(transfers, conn,current_user ):
                 "sender":{
                     "account_id": sender["id"],
                     "user_id": sender["user_id"],
-                    "new_balance": f"${deduct['balance']:.2f}"
-                }} 
+                    "avaliable_funds": (
+                    f"${available_funds - transfers.amount: 2f}"
+                    ),
+                },
+                } 
             
     

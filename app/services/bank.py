@@ -1,4 +1,4 @@
-#communicator to the external bank service
+#communicates with the external bank service
 
 import httpx
 
@@ -20,8 +20,7 @@ async def make_bank_transfer(
             }
         )
 
-    #print(response.status_code)
-    #print(response.text)
+    response.raise_for_status()
 
     return response.json()
 
