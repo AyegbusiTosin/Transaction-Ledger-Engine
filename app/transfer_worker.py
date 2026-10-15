@@ -5,7 +5,8 @@ import asyncpg
 import os
 from dotenv import load_dotenv
 import httpx
-from app.services.bank import make_bank_transfer
+from services.bank import make_bank_transfer
+from services.transfers import finalize_transfer
 
 load_dotenv()
 
@@ -94,10 +95,27 @@ async def main():
         )
         print(f"Bank response: {result}")
 
+        if result.get("status") != "SUCCESS":
+            print("Bank did not confirm success; no finalization")
+            return
+
+        finalized = await finalize_transfer(
+            conn=conn,
+            transfer_id=transfer["id"],
+            worker_id =worker_id,
+            ownership_version=transfer["ownership_version"]
+        )
+        if finalized:
+            print(f"Transfer {transfer['id']} finalized successfully")
+        else:
+            print("Finalization skipped: this worker no longer "
+                  "owns the transfer or its lease has expired"
+                  )
+
     except httpx.HTTPError as exc:
         print(f"Bank request error: {exc}")
         print(
-            "Outcome uncertain. keeping the transfer"
+            "Outcome uncertain. keeping the transfer. "
             "reserved for recovery"
 
         )

@@ -136,5 +136,84 @@ async def process_transfer(transfers, conn,current_user ):
                     ),
                 },
                 } 
+
+#after successfully gettiNG a 200 OK SUCCESS from the external bank simulator
+async def finalize_transfer(
+            conn, 
+            transfer_id: int,
+            worker_id:str,
+            ownership_version: int,
+            ):
+
+      async with conn.transaction():
+            #Locks down the transfer 
+            #and verify the  background worker still owns the task
+
+            transfer = await conn.fetchrow(
+                  """
+                SELECT id, sender_id, receiver_id, amount, status
+                FROM transfers
+                WHERE id = $1
+                    AND status = 'PROCESSING'
+                    AND worker_id = $2
+                    AND ownership_version = $3
+                    AND lease_expires_at > NOW()
+                    FOR UPDATE;
+                """, transfer_id, worker_id, ownership_version
+            )
+
+            if transfer is None:
+                  return False
+             
+            #lock both accounts in a consistent order to prevent deadlocks
+            accounts = await conn.fetch(
+                  """
+                    SELECT id
+                    FROM account 
+                    WHERE id = ANY($1::int[])
+                    ORDER BY id
+                    FOR UPDATE;
+                  """,
+                  [transfer["sender_id"], transfer["receiver_id"]],      
+            )
+            if len(accounts) != 2:
+                  raise RuntimeError("Transfer account not found")
             
-    
+            amount = transfer["amount"]
+
+            #money is deducted from the sender from both balance and reserved_balance
+            sender = await conn.fetchrow(
+                  """
+                UPDATE account
+                SET balance = balance - $1,
+                    reserved_balance = reserved_balance - $1
+                WHERE id = $2
+                    AND reserved_balance >= $1
+                    AND balance >= $1
+                RETURNING id;
+            """, amount, transfer["sender_id"],
+            )
+
+            if sender is None:
+                  raise RuntimeError("Sender balance or resevation is invalid")
+
+            #money is credited to the receiver 
+            await conn.execute(
+                  """
+                UPDATE account
+                SET balance = balance + $1
+                WHERE id = $2;
+            """, amount, transfer["receiver_id"],
+            )
+
+            #change state to SUCCESS
+            await conn.execute(
+                  """
+                UPDATE transfers
+                SET status = 'SUCCESS',
+                    worker_id = NULL,
+                    lease_expires_at = NULL
+                WHERE id = $1;
+            """, transfer_id
+            )
+            return True

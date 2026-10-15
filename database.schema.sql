@@ -7,4 +7,12 @@ CREATE TABLE account (
 
 
 
-
+SELECT
+    id,
+    status,
+    worker_id,
+    ownership_version,
+    lease_expires_at,
+    lease_expires_at > NOW() AS lease_is_valid
+FROM transfers
+WHERE id = 1;
