@@ -53,6 +53,6 @@ async def make_transfer(transfer: BankTransferRequest):
     print(processed_transfers)   
 
     #simulate response getting lost/delayed
-    await asyncio.sleep(5)
+    await asyncio.sleep(1)
 
     return result 

@@ -124,7 +124,7 @@ async def process_transfer(transfers, conn,current_user ):
                                                 transfers.idempotency_key)
     
             return {
-                "message": "Transfer processed successfully",
+                "message": "Transfer logged. To be processed",
                 "transfer_log" :  transfer_log["id"],
                 "status": transfer_log["status"],
                 "amount": f"${transfers.amount:.2f}",
