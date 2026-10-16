@@ -49,8 +49,8 @@ async def make_transfer(transfer: BankTransferRequest):
     #record the completed operation
     processed_transfers[transfer.idempotency_key] = result
 
-    print("BANK: transfer processed")
-    print(processed_transfers)   
+    #print("BANK: transfer processed")
+   # print(processed_transfers)   
 
     #simulate response getting lost/delayed
     await asyncio.sleep(1)
